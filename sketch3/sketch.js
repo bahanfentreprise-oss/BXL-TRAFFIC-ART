@@ -1,4 +1,3 @@
-
 // ---- Global variables ----
 let url;
 let traffic;
@@ -30,9 +29,6 @@ function draw() {
   // 1️⃣ Dark background and soft transparent overlay
   background(0,75);
   
-  // Slight transparency over center to fade trails naturally over time
-  
-
   // 2️⃣ Handle global fade transitions
   handleFade();
 
@@ -42,14 +38,18 @@ function draw() {
   // 4️⃣ Animate and draw dots
   for (let c of circles) {
     // Orbit speed depends on traffic speed
-    // Base: one full orbit per minute at speed=0, up to 3x faster at speed=100
     let speedFactor = map(c.speed, 0, 100, 1, 3);
-    let baseSpeed = TWO_PI / (60 * 60); // base orbit = 1 rotation per minute
-    c.angle += baseSpeed * speedFactor; // faster traffic -> faster orbit
+    let baseSpeed = TWO_PI / (60 * 60);
+    c.angle += baseSpeed * speedFactor;
 
     // Subtle Perlin noise wobble
     let wobble = map(noise(c.noiseSeed, frameCount * 0.002), 0, 1, -5, 5);
-    let r = c.orbitRadius + wobble;
+    
+    // Calculate safe orbit radius to keep circles within canvas
+    let maxSafeRadius = min(width, height) / 2 - c.diameter / 2 - 5; // Account for diameter and wobble
+    let safeOrbitRadius = min(c.orbitRadius, maxSafeRadius);
+    
+    let r = safeOrbitRadius + wobble;
 
     // Compute position
     c.x = width / 2 + cos(c.angle) * r;
@@ -89,15 +89,12 @@ function draw() {
       print("🔄 Data refreshed smoothly");
     });
   }
-
-
-  
 }
 
 // ---- Fade-in / fade-out control ----
 function handleFade() {
-  if (fadingOut) fadeProgress -= 0.01; // fade out
-  else if (fadingIn) fadeProgress += 0.01; // fade in
+  if (fadingOut) fadeProgress -= 0.01;
+  else if (fadingIn) fadeProgress += 0.01;
 
   fadeProgress = constrain(fadeProgress, 0, 1);
   if (fadeProgress >= 1 && fadingIn) fadingIn = false;
@@ -109,11 +106,8 @@ function drawTrails() {
   for (let c of circles) {
     beginShape();
     for (let i = 0; i < c.trail.length; i++) {
-      // Trail fades along its length and overall with fadeProgress
       let tAlpha = map(i, 0, c.trail.length, 0, 180) * fadeProgress;
       let violetValue = map(c.speed, 0, 100, 80, 180);
-
-      // Trail width matches circle diameter
       
       strokeWeight(c.diameter);
       stroke(violetValue-28, 0, 255, tAlpha);
@@ -136,18 +130,20 @@ function processData() {
     let detector = traffic.data[k];
     if (!detector.results) continue;
 
-    let result =
-      detector.results["15m"] ||
-      null;
+    let result = detector.results["15m"] || null;
     if (!result) continue;
 
     let count = result.count || 0;
     let speed = result.speed || 0;
     let angle = random(TWO_PI);
-    let orbitRadius = random(50, 180);
+    
+    // Calculate maximum safe orbit radius based on circle size
+    let maxDiameter = map(count, 0, 100, 3, 25);
+    let maxSafeRadius = min(width, height) / 2 - maxDiameter / 2 - 10; // Extra margin
+    
+    let orbitRadius = random(50, min(180, maxSafeRadius)); // Constrain within safe bounds
     let noiseSeed = random(1000);
 
-    // Store diameter so trail width can match
     let d = map(count, 0, 100, 3, 25);
 
     circles.push({
@@ -163,7 +159,7 @@ function processData() {
     });
   }
 
-  fadeProgress = 0; // begin new data invisible
+  fadeProgress = 0;
   fadingIn = true;
   print("✓ Parsed " + circles.length + " detectors");
 }
