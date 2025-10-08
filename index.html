@@ -23,29 +23,45 @@
       padding: 0 10px;
     }
 
-    /* Container for iframes - keeps them in a single row */
+    /* Container for iframes - allows wrapping on smaller screens */
     .frames-container {
       display: flex;
+      flex-wrap: wrap; /* Allows frames to wrap to next line */
+      justify-content: center; /* Centers frames when they wrap */
       width: 100%;
-      max-width: 1200px; /* Prevents excessive stretching on large screens */
-      height: 100vh;
+      max-width: 1200px;
+      height: auto; /* Allow container to grow when frames wrap */
+      min-height: 100vh; /* Still fill the viewport height */
       gap: 0; /* No gaps between frames */
     }
 
     /* Individual iframe styling */
     iframe {
-      flex: 1; /* Each iframe takes equal space */
+      flex: 1; /* Each iframe takes equal space in row layout */
       border: none;
       aspect-ratio: 1/1; /* Maintain square aspect ratio */
       min-width: 400px; /* Never go below 400px */
       min-height: 400px;
     }
+
+    /* When screen is below 1200px, switch to column layout */
+    @media (max-width: 1200px) {
+      .frames-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      iframe {
+        width: 100%; /* Full width in column layout */
+        max-width: 500px; /* Prevent excessive stretching */
+      }
+    }
   </style>
 </head>
 <body>
-  <!-- Container to keep frames in a single row -->
+  <!-- Container that allows frames to wrap -->
   <div class="frames-container">
-    <!-- Your iframes - will stretch to fill available space -->
+    <!-- Your iframes - will wrap to column on smaller screens -->
     <iframe src="sketch1/index.html" title="1 min"></iframe>
     <iframe src="sketch2/index.html" title="5 min"></iframe>
     <iframe src="sketch3/index.html" title="15 min"></iframe>
