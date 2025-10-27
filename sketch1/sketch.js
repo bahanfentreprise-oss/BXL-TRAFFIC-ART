@@ -138,6 +138,8 @@ function processData() {
 
     let result =
       detector.results["1m"] ||
+      detector.results["5m"] ||
+      detector.results["15m"] ||
       null;
     if (!result) continue;
 
